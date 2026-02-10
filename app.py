@@ -7,6 +7,8 @@ import logging
 from datetime import datetime, timedelta
 import threading
 import time
+import random
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 CORS(app)
@@ -15,13 +17,16 @@ CORS(app)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 video_cache = {}
-CACHE_DURATION = 1  # 5 minutes cache
-REFRESH_INTERVAL = 60  # 30 minutes auto-refresh
+CACHE_DURATION = 0  # 5 minutes cache
+REFRESH_INTERVAL = 1800  # 30 minutes auto-refresh
+MAX_RETRIES = 3
 
 TARGET_SITES = [
     {"name": "Main Site", "url": "https://www.xv-ru.com/?k=sissy&sort=random&typef=gay"},
     {"name": "Gay Videos", "url": "https://www.xv-ru.com/?k=gay&sort=random&typef=gay"},
-    {"name": "Trans Videos", "url": "https://www.xv-ru.com/?k=trans&sort=random&typef=trans"}
+    {"name": "Trans Videos", "url": "https://www.xv-ru.com/?k=trans&sort=random&typef=trans"},
+    {"name": "Lesbian Videos", "url": "https://www.xv-ru.com/?k=lesbian&sort=random&typef=lesbian"},
+    {"name": "Bisexual Videos", "url": "https://www.xv-ru.com/?k=bisexual&sort=random&typef=bisexual"}
 ]
 
 def parse_main_page(page=0, site_index=0):
@@ -40,8 +45,21 @@ def parse_main_page(page=0, site_index=0):
 
         print(f"Запрос к {url}")
 
+        # Создаем scraper с случайными заголовками для обхода защиты
+        headers = {
+            'User-Agent': random.choice([
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            ]),
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+        }
+
         scraper = cloudscraper.create_scraper()
-        response = scraper.get(url, timeout=15)
+        response = scraper.get(url, headers=headers, timeout=15)
 
         print(f"Статус: {response.status_code}")
 
@@ -110,12 +128,26 @@ def parse_main_page(page=0, site_index=0):
                         elif thumbnail.startswith('/'):
                             base = site_url.split('?')[0].rstrip('/')
                             thumbnail = base + thumbnail
+                        # relative (images/img.jpg)
+                        elif not thumbnail.startswith('http'):
+                            base = f"{urlparse(site_url).scheme}://{urlparse(site_url).netloc}"
+                            thumbnail = base.rstrip('/') + '/' + thumbnail
 
                 # Длительность
                 duration = "00:00"
                 dur_span = block.find('span', class_='duration')
                 if dur_span:
                     duration = dur_span.get_text(strip=True)
+
+                # Попробуем получить количество просмотров
+                views = "0"
+                views_elem = block.find('span', class_='views')
+                if views_elem:
+                    views_text = views_elem.get_text(strip=True)
+                    # Извлекаем число просмотров
+                    views_match = re.search(r'(\d+(?:\.\d+)?[KMB]?)', views_text)
+                    if views_match:
+                        views = views_match.group(1)
 
                 # Добавляем информацию о сайте
                 videos.append({
@@ -124,7 +156,9 @@ def parse_main_page(page=0, site_index=0):
                     'page_url': video_url,
                     'thumbnail': thumbnail,
                     'duration': duration,
-                    'source_site': TARGET_SITES[site_index]["name"]
+                    'views': views,
+                    'source_site': TARGET_SITES[site_index]["name"],
+                    'added_at': datetime.utcnow().isoformat()
                 })
 
                 print(f"✓ {video_id}: {title[:80]}")
@@ -178,6 +212,7 @@ def get_videos():
     # Получаем номер страницы из параметров запроса
     page = request.args.get('page', 0, type=int)
     site_index = request.args.get('site', 0, type=int)
+    sort_by = request.args.get('sort', 'random')  # random, date, views
 
     # Проверяем корректность индекса сайта
     if site_index >= len(TARGET_SITES):
@@ -198,11 +233,32 @@ def get_videos():
         remaining = int(CACHE_DURATION - (current_time - video_cache[cache_key]['timestamp']))
         print(f"✓ Кеш страницы {page} сайта {TARGET_SITES[site_index]['name']} ({remaining} сек, видео: {len(video_cache[cache_key]['data'])})")
 
+    # Сортировка видео
+    videos = video_cache[cache_key]['data'].copy()
+
+    if sort_by == 'date':
+        videos.sort(key=lambda x: x.get('added_at', ''), reverse=True)
+    elif sort_by == 'views':
+        def extract_views(views_str):
+            if 'K' in views_str:
+                return float(views_str.replace('K', '')) * 1000
+            elif 'M' in views_str:
+                return float(views_str.replace('M', '')) * 1000000
+            elif 'B' in views_str:
+                return float(views_str.replace('B', '')) * 1000000000
+            else:
+                return int(views_str) if views_str.isdigit() else 0
+
+        videos.sort(key=lambda x: extract_views(x.get('views', '0')), reverse=True)
+    elif sort_by == 'random':
+        random.shuffle(videos)
+
     resp = make_response(jsonify({
-        'videos': video_cache[cache_key]['data'],
+        'videos': videos,
         'page': page,
-        'total': len(video_cache[cache_key]['data']),
-        'site_info': TARGET_SITES[site_index]
+        'total': len(videos),
+        'site_info': TARGET_SITES[site_index],
+        'sort_by': sort_by
     }))
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     resp.headers['Pragma'] = 'no-cache'
@@ -325,6 +381,37 @@ def get_stats():
         'sites_count': len(TARGET_SITES)
     })
 
+@app.route('/api/trending')
+def get_trending():
+    """API endpoint для получения трендовых видео"""
+    trending_videos = []
+
+    # Получаем видео из всех сайтов
+    for site_index in range(len(TARGET_SITES)):
+        if f'page_0_site_{site_index}' in video_cache:
+            videos = video_cache[f'page_0_site_{site_index}']['data']
+            # Сортируем по количеству просмотров
+            def extract_views(views_str):
+                if 'K' in views_str:
+                    return float(views_str.replace('K', '')) * 1000
+                elif 'M' in views_str:
+                    return float(views_str.replace('M', '')) * 1000000
+                elif 'B' in views_str:
+                    return float(views_str.replace('B', '')) * 1000000000
+                else:
+                    return int(views_str) if views_str.isdigit() else 0
+
+            videos.sort(key=lambda x: extract_views(x.get('views', '0')), reverse=True)
+            trending_videos.extend(videos[:5])  # Берем топ 5 с каждого сайта
+
+    # Возвращаем топ 20 самых просматриваемых видео
+    trending_videos.sort(key=lambda x: extract_views(x.get('views', '0')), reverse=True)
+
+    return jsonify({
+        'trending_videos': trending_videos[:20],
+        'total': len(trending_videos)
+    })
+
 if __name__ == '__main__':
     print("="*60)
     print("🚀 http://localhost:5000")
@@ -332,6 +419,7 @@ if __name__ == '__main__':
     print("🔍 http://localhost:5000/api/search?q=term")
     print("📊 http://localhost:5000/api/stats")
     print("🌐 http://localhost:5000/api/sites")
+    print("🔥 http://localhost:5000/api/trending")
     print("="*60)
 
     # Запускаем автообновление кеша в отдельном потоке
