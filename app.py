@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, make_response, send_from_directory
 from bs4 import BeautifulSoup
 from flask_cors import CORS
 import re
@@ -10,7 +10,7 @@ CORS(app)
 video_cache = {}
 CACHE_DURATION = 300
 
-TARGET_SITE = "https://www.xv-ru.com/?k=sissy&typef=gay"
+TARGET_SITE = "https://www.xv-ru.com/?k=sissy&sort=random&typef=gay"
 
 def parse_main_page(page=0):
     """Парсинг главной страницы с поддержкой пагинации"""
@@ -133,6 +133,14 @@ def get_video_embed_url(video_id):
 def index():
     return render_template('index.html')
 
+
+@app.route('/logo.png')
+def logo_png():
+    # Serve the logo file located in the project root
+    import os
+    root = os.getcwd()
+    return send_from_directory(root, 'logo.png')
+
 @app.route('/api/videos')
 def get_videos():
     import time
@@ -155,11 +163,15 @@ def get_videos():
         remaining = int(CACHE_DURATION - (current_time - video_cache[cache_key]['timestamp']))
         print(f"✓ Кеш страницы {page} ({remaining} сек, видео: {len(video_cache[cache_key]['data'])})")
 
-    return jsonify({
+    resp = make_response(jsonify({
         'videos': video_cache[cache_key]['data'],
         'page': page,
         'total': len(video_cache[cache_key]['data'])
-    })
+    }))
+    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 @app.route('/api/video/<video_id>')
 def get_video_details(video_id):
@@ -179,9 +191,17 @@ def get_video_details(video_id):
     if video:
         embed_data = get_video_embed_url(video_id)
         video['embed'] = embed_data
-        return jsonify(video)
+        resp = make_response(jsonify(video))
+        resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        resp.headers['Pragma'] = 'no-cache'
+        resp.headers['Expires'] = '0'
+        return resp
 
-    return jsonify({'error': 'Video not found'}), 404
+    resp = make_response(jsonify({'error': 'Video not found'}), 404)
+    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 @app.route('/api/refresh')
 def refresh():
@@ -193,10 +213,14 @@ def refresh():
     for video in videos[:3]:
         video['embed'] = get_video_embed_url(video['id'])
 
-    return jsonify({
+    resp = make_response(jsonify({
         'total': len(videos),
         'videos': videos[:3]
-    })
+    }))
+    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 if __name__ == '__main__':
     print("="*60)

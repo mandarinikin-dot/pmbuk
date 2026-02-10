@@ -91,6 +91,23 @@
         .header-content {
             max-width: 1400px;
             margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .logo {
+            width: 220px;
+            max-width: 40vw;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .title-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
         }
 
         .header h1 {
@@ -836,8 +853,12 @@
 
     <div class="header">
         <div class="header-content">
-            <h1>P M B U K</h1>
-            <p class="header-subtitle">Премиум контент</p>
+            <div class="logo-wrap">
+                <img src="/logo.png" alt="PMBUK logo" class="logo">
+            </div>
+            <div class="title-wrap">
+                <p class="header-subtitle">Porno <br> Videos <b/r> </b> </p>
+            </div>
         </div>
     </div>
 
@@ -892,7 +913,7 @@
         async function loadVideos(page = 0) {
             try {
                 console.log(`Загрузка видео для страницы ${page}...`);
-                const response = await fetch(`${API_URL}/videos?page=${page}`);
+                const response = await fetch(`${API_URL}/videos?page=${page}`, { cache: 'no-store' });
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -986,7 +1007,7 @@
 
             try {
                 console.log(`Загрузка видео ID: ${videoId}`);
-                const response = await fetch(`${API_URL}/video/${videoId}`);
+                const response = await fetch(`${API_URL}/video/${videoId}`, { cache: 'no-store' });
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
