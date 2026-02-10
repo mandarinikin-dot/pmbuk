@@ -1002,7 +1002,9 @@
                                 class="video-player"
                                 src="${videoData.embed.url}"
                                 frameborder="0"
+                                sandbox="allow-scripts allow-same-origin"
                                 allowfullscreen
+                                referrerpolicy="no-referrer"
                                 allow="autoplay; fullscreen">
                             </iframe>
                         `;
@@ -1021,7 +1023,9 @@
                             class="video-player"
                             src="${videoData.page_url}"
                             frameborder="0"
+                            sandbox="allow-scripts allow-same-origin"
                             allowfullscreen
+                            referrerpolicy="no-referrer"
                             allow="autoplay; fullscreen">
                         </iframe>
                     `;
