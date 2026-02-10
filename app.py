@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 from flask_cors import CORS
 import re
 import cloudscraper
-import os
 
 app = Flask(__name__)
 CORS(app)
@@ -11,7 +10,7 @@ CORS(app)
 video_cache = {'data': [], 'timestamp': 0}
 CACHE_DURATION = 300
 
-TARGET_SITE = "https://www.xv-ru.com/"
+TARGET_SITE = "https://www.xv-ru.com/?k=sissy"
 
 def parse_main_page():
     """Парсинг главной страницы"""
@@ -165,9 +164,8 @@ def refresh():
     })
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
     print("="*60)
-    print(f"🚀 http://0.0.0.0:{port}")
-    print("🔄 /api/refresh")
+    print("🚀 http://localhost:5000")
+    print("🔄 http://localhost:5000/api/refresh")
     print("="*60)
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(debug=True, port=5000)
