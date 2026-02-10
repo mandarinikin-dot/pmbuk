@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Видео Коллекция</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>P M B U K</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -14,6 +14,7 @@
             --card-bg: rgba(25, 25, 40, 0.6);
             --accent-gold: #d4af37;
             --accent-amber: #ff9500;
+            --accent-bronze: #cd7f32;
             --text-primary: #ffffff;
             --text-secondary: #b8b8c8;
             --border-color: rgba(212, 175, 55, 0.15);
@@ -25,15 +26,18 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: 'DM Sans', -apple-system, sans-serif;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--primary-bg);
             color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
             position: relative;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body::before {
@@ -93,20 +97,27 @@
             font-family: 'Playfair Display', serif;
             font-size: clamp(2.5rem, 8vw, 5rem);
             font-weight: 900;
-            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-amber) 100%);
+            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-amber) 50%, var(--accent-bronze) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 12px;
             letter-spacing: -0.02em;
             line-height: 1.1;
+            animation: shimmer 3s ease-in-out infinite;
+            background-size: 200% 200%;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
         .header-subtitle {
             font-size: clamp(0.95rem, 2vw, 1.1rem);
             color: var(--text-secondary);
             font-weight: 400;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
         }
 
@@ -120,8 +131,8 @@
 
         .videos-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
             animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s backwards;
         }
 
@@ -139,13 +150,14 @@
         .video-card {
             position: relative;
             background: var(--card-bg);
-            border-radius: 20px;
+            border-radius: 24px;
             overflow: hidden;
             cursor: pointer;
             transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
             border: 1px solid var(--border-color);
             backdrop-filter: blur(10px);
             animation: cardAppear 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+            touch-action: manipulation;
         }
 
         @keyframes cardAppear {
@@ -185,12 +197,17 @@
             transform: translateY(-12px) scale(1.02);
             border-color: var(--accent-gold);
             box-shadow:
-                0 25px 50px -12px rgba(212, 175, 55, 0.25),
-                0 0 0 1px rgba(212, 175, 55, 0.1);
+                0 25px 50px -12px rgba(212, 175, 55, 0.3),
+                0 0 0 1px rgba(212, 175, 55, 0.15),
+                0 0 60px rgba(212, 175, 55, 0.15);
         }
 
         .video-card:hover::before {
             opacity: 1;
+        }
+
+        .video-card:active {
+            transform: translateY(-8px) scale(1.01);
         }
 
         .video-thumbnail {
@@ -198,7 +215,7 @@
             width: 100%;
             padding-bottom: 56.25%;
             overflow: hidden;
-            background: var(--secondary-bg);
+            background: linear-gradient(135deg, var(--secondary-bg) 0%, #1a1a2e 100%);
         }
 
         .video-thumbnail::after {
@@ -207,8 +224,8 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 120px;
-            background: linear-gradient(to top, rgba(10, 10, 15, 0.9) 0%, transparent 100%);
+            height: 150px;
+            background: linear-gradient(to top, rgba(10, 10, 15, 0.95) 0%, transparent 100%);
             z-index: 2;
             pointer-events: none;
         }
@@ -220,23 +237,24 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-            filter: brightness(0.85);
+            transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
+            filter: brightness(0.8) contrast(1.1);
         }
 
         .video-card:hover .video-thumbnail img {
-            transform: scale(1.15);
-            filter: brightness(1);
+            transform: scale(1.1);
+            filter: brightness(1) contrast(1.15);
         }
 
+        /* УЛУЧШЕННАЯ КНОПКА PLAY */
         .play-icon {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 70px;
-            height: 70px;
-            background: rgba(212, 175, 55, 0.95);
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.95) 0%, rgba(255, 149, 0, 0.95) 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -245,6 +263,35 @@
             opacity: 0;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(212, 175, 55, 0.4);
+        }
+
+        .play-icon::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-amber));
+            opacity: 0;
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.7;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.3;
+            }
+            100% {
+                transform: scale(1.15);
+                opacity: 0;
+            }
         }
 
         .play-icon::after {
@@ -252,50 +299,175 @@
             width: 0;
             height: 0;
             border-style: solid;
-            border-width: 12px 0 12px 20px;
+            border-width: 16px 0 16px 28px;
             border-color: transparent transparent transparent var(--primary-bg);
-            margin-left: 4px;
+            margin-left: 6px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+            position: relative;
+            z-index: 1;
         }
 
         .video-card:hover .play-icon {
             opacity: 1;
             transform: translate(-50%, -50%) scale(1.1);
+            animation: playPulse 1.5s ease-in-out infinite;
         }
 
+        @keyframes playPulse {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.15);
+            }
+        }
+
+        /* УЛУЧШЕННАЯ ДЛИТЕЛЬНОСТЬ */
         .duration {
             position: absolute;
-            bottom: 15px;
-            right: 15px;
-            background: rgba(10, 10, 15, 0.95);
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, rgba(10, 10, 15, 0.95) 0%, rgba(20, 20, 31, 0.95) 100%);
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
             letter-spacing: 0.5px;
             z-index: 3;
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            backdrop-filter: blur(10px);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            backdrop-filter: blur(15px);
+            box-shadow:
+                0 4px 16px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .duration::before {
+            content: '▶';
+            font-size: 10px;
+            color: var(--accent-gold);
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .video-card:hover .duration {
+            border-color: var(--accent-gold);
+            box-shadow:
+                0 8px 24px rgba(212, 175, 55, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
         }
 
         .video-info {
             position: relative;
-            padding: 24px;
+            padding: 20px;
             z-index: 2;
         }
 
         .video-title {
-            font-size: 17px;
+            font-size: 15px;
             font-weight: 600;
-            line-height: 1.5;
+            line-height: 1.4;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
             color: var(--text-primary);
             letter-spacing: -0.01em;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
 
-        /* Modal Styles */
+        /* ПАГИНАЦИЯ */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 60px;
+            padding: 30px 20px;
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s backwards;
+        }
+
+        .pagination-btn {
+            padding: 18px 36px;
+            background: linear-gradient(135deg, rgba(25, 25, 40, 0.8) 0%, rgba(30, 30, 45, 0.8) 100%);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+            touch-action: manipulation;
+            min-width: 140px;
+            justify-content: center;
+        }
+
+        .pagination-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .pagination-btn:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-amber) 100%);
+            border-color: var(--accent-gold);
+            color: var(--primary-bg);
+            transform: translateY(-4px);
+            box-shadow:
+                0 12px 30px -8px rgba(212, 175, 55, 0.5),
+                0 0 0 4px rgba(212, 175, 55, 0.1);
+        }
+
+        .pagination-btn:active:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .page-info {
+            padding: 18px 32px;
+            background: linear-gradient(135deg, rgba(25, 25, 40, 0.9) 0%, rgba(30, 30, 45, 0.9) 100%);
+            border: 2px solid var(--accent-gold);
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            backdrop-filter: blur(15px);
+            box-shadow:
+                0 8px 24px rgba(212, 175, 55, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            min-width: 120px;
+            text-align: center;
+        }
+
+        /* МОДАЛЬНОЕ ОКНО */
         .modal {
             display: none;
             position: fixed;
@@ -316,12 +488,8 @@
         }
 
         @keyframes modalFadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .modal-content {
@@ -344,39 +512,41 @@
 
         .close-modal {
             position: absolute;
-            top: -60px;
+            top: -70px;
             right: 0;
-            width: 50px;
-            height: 50px;
-            font-size: 28px;
+            width: 56px;
+            height: 56px;
+            font-size: 32px;
             color: var(--text-primary);
             cursor: pointer;
-            background: rgba(212, 175, 55, 0.1);
-            border: 1px solid var(--border-color);
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(255, 149, 0, 0.15) 100%);
+            border: 2px solid var(--border-color);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
+            touch-action: manipulation;
         }
 
         .close-modal:hover {
-            background: var(--accent-gold);
+            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-amber) 100%);
             color: var(--primary-bg);
-            transform: rotate(90deg);
+            transform: rotate(90deg) scale(1.1);
             border-color: var(--accent-gold);
+            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
         }
 
         .video-player {
             width: 100%;
             aspect-ratio: 16/9;
             background: #000;
-            border-radius: 16px;
+            border-radius: 20px;
             overflow: hidden;
             box-shadow:
                 0 25px 50px -12px rgba(0, 0, 0, 0.8),
-                0 0 0 1px rgba(212, 175, 55, 0.1);
+                0 0 0 1px rgba(212, 175, 55, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -399,22 +569,17 @@
             min-height: 60vh;
             text-align: center;
             padding: 100px 20px;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
         }
 
         .loading-spinner {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 25px;
-            border: 3px solid rgba(212, 175, 55, 0.2);
-            border-top: 3px solid var(--accent-gold);
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 30px;
+            border: 4px solid rgba(212, 175, 55, 0.2);
+            border-top: 4px solid var(--accent-gold);
             border-radius: 50%;
             animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
         }
 
         @keyframes spin {
@@ -438,16 +603,16 @@
         }
 
         .error-icon {
-            font-size: 50px;
+            font-size: 60px;
             margin-bottom: 20px;
             opacity: 0.8;
         }
 
-        /* Responsive Design */
+        /* ОПТИМИЗАЦИЯ ДЛЯ МОБИЛЬНЫХ */
         @media (max-width: 1200px) {
             .videos-grid {
-                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                gap: 25px;
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 18px;
             }
         }
 
@@ -457,92 +622,212 @@
             }
 
             .header h1 {
-                font-size: 2.5rem;
+                font-size: clamp(2.2rem, 10vw, 3rem);
+            }
+
+            .container {
+                padding: 40px 16px 70px;
+            }
+
+            .videos-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 14px;
+            }
+
+            .video-card {
+                border-radius: 18px;
+            }
+
+            .play-icon {
+                width: 75px;
+                height: 75px;
+            }
+
+            .play-icon::after {
+                border-width: 14px 0 14px 24px;
+            }
+
+            .duration {
+                bottom: 14px;
+                right: 14px;
+                padding: 8px 14px;
+                font-size: 13px;
+                border-width: 1.5px;
+            }
+
+            .video-info {
+                padding: 14px;
+            }
+
+            .video-title {
+                font-size: 14px;
+            }
+
+            .pagination {
+                flex-wrap: wrap;
+                gap: 12px;
+                margin-top: 50px;
+                padding: 25px 16px;
+            }
+
+            .pagination-btn {
+                padding: 16px 28px;
+                font-size: 15px;
+                min-width: 120px;
+            }
+
+            .page-info {
+                padding: 16px 28px;
+                font-size: 16px;
+                min-width: 100px;
+            }
+
+            .modal-content {
+                width: 96%;
+            }
+
+            .close-modal {
+                top: -65px;
+                width: 52px;
+                height: 52px;
+                font-size: 28px;
+            }
+
+            .video-player {
+                border-radius: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 35px 16px 25px;
+            }
+
+            .header h1 {
+                font-size: clamp(2rem, 12vw, 2.5rem);
+            }
+
+            .header-subtitle {
+                font-size: 0.85rem;
+                letter-spacing: 0.08em;
+            }
+
+            .container {
+                padding: 30px 12px 60px;
             }
 
             .videos-grid {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: 16px;
             }
 
             .video-card {
                 border-radius: 16px;
             }
 
-            .modal-content {
-                width: 98%;
-            }
-
-            .close-modal {
-                top: -55px;
-                width: 45px;
-                height: 45px;
-                font-size: 24px;
-            }
-
-            .video-player {
-                border-radius: 12px;
-            }
-
             .play-icon {
-                width: 60px;
-                height: 60px;
+                width: 70px;
+                height: 70px;
             }
 
             .play-icon::after {
-                border-width: 10px 0 10px 16px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                padding: 30px 15px 60px;
-            }
-
-            .header {
-                padding: 30px 15px 25px;
-            }
-
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .header-subtitle {
-                font-size: 0.85rem;
-            }
-
-            .video-info {
-                padding: 18px;
-            }
-
-            .video-title {
-                font-size: 15px;
+                border-width: 12px 0 12px 20px;
             }
 
             .duration {
                 bottom: 12px;
                 right: 12px;
-                padding: 5px 10px;
+                padding: 7px 12px;
                 font-size: 12px;
+            }
+
+            .video-info {
+                padding: 16px;
+            }
+
+            .video-title {
+                font-size: 14px;
+                line-height: 1.35;
+            }
+
+            .pagination {
+                gap: 10px;
+                margin-top: 40px;
+            }
+
+            .pagination-btn {
+                padding: 14px 24px;
+                font-size: 14px;
+                min-width: 110px;
+                gap: 8px;
+            }
+
+            .page-info {
+                padding: 14px 24px;
+                font-size: 15px;
+                width: 100%;
+                order: -1;
+            }
+
+            .close-modal {
+                top: -60px;
+                width: 48px;
+                height: 48px;
+                font-size: 26px;
             }
         }
 
-        /* Smooth Scrollbar */
+        /* УЛУЧШЕННЫЙ СКРОЛЛБАР */
         ::-webkit-scrollbar {
-            width: 10px;
+            width: 12px;
         }
 
         ::-webkit-scrollbar-track {
             background: var(--primary-bg);
+            border-left: 1px solid var(--border-color);
         }
 
         ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, var(--accent-gold) 0%, var(--accent-amber) 100%);
-            border-radius: 5px;
+            background: linear-gradient(180deg, var(--accent-gold) 0%, var(--accent-amber) 50%, var(--accent-bronze) 100%);
+            border-radius: 6px;
+            border: 2px solid var(--primary-bg);
         }
 
         ::-webkit-scrollbar-thumb:hover {
             background: var(--accent-gold);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+
+        /* SKELETON LOADER */
+        @keyframes skeleton-loading {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .skeleton {
+            background: linear-gradient(
+                90deg,
+                var(--card-bg) 25%,
+                rgba(212, 175, 55, 0.1) 50%,
+                var(--card-bg) 75%
+            );
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+        }
+
+        /* TOUCH IMPROVEMENTS */
+        @media (hover: none) and (pointer: coarse) {
+            .video-card:active {
+                transform: scale(0.98);
+            }
+
+            .pagination-btn:active:not(:disabled) {
+                transform: scale(0.96);
+            }
         }
     </style>
 </head>
@@ -551,7 +836,7 @@
 
     <div class="header">
         <div class="header-content">
-            <h1>Видео Коллекция</h1>
+            <h1>P M B U K</h1>
             <p class="header-subtitle">Премиум контент</p>
         </div>
     </div>
@@ -563,9 +848,22 @@
                 <div class="loading-text">Загрузка видео...</div>
             </div>
         </div>
+
+        <div class="pagination">
+            <button class="pagination-btn" id="prevBtn" onclick="previousPage()">
+                <span>←</span>
+                <span>Назад</span>
+            </button>
+            <div class="page-info">
+                Стр. <span id="currentPage">1</span>
+            </div>
+            <button class="pagination-btn" id="nextBtn" onclick="nextPage()">
+                <span>Вперёд</span>
+                <span>→</span>
+            </button>
+        </div>
     </div>
 
-    <!-- Modal для просмотра видео -->
     <div id="video-modal" class="modal">
         <div class="modal-content">
             <button class="close-modal" onclick="closeModal()">&times;</button>
@@ -575,27 +873,43 @@
 
     <script>
         const API_URL = '/api';
+        let currentPage = 0;
 
-        // Загрузка всех видео
-        async function loadVideos() {
+        // Lazy loading для изображений
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.classList.remove('skeleton');
+                    observer.unobserve(img);
+                }
+            });
+        }, {
+            rootMargin: '50px'
+        });
+
+        async function loadVideos(page = 0) {
             try {
-                console.log('Загрузка видео...');
-                const response = await fetch(`${API_URL}/videos`);
+                console.log(`Загрузка видео для страницы ${page}...`);
+                const response = await fetch(`${API_URL}/videos?page=${page}`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                const videos = await response.json();
-                console.log(`Получено видео: ${videos.length}`);
+                const data = await response.json();
+                console.log(`Получено видео: ${data.total} на странице ${data.page}`);
 
-                if (videos.length === 0) {
+                if (data.videos.length === 0) {
                     document.getElementById('videos-container').innerHTML =
-                        '<div class="error"><div class="error-icon">📭</div>Видео не найдены. Попробуйте позже.</div>';
+                        '<div class="error"><div class="error-icon">📭</div>Видео не найдены на этой странице.</div>';
                     return;
                 }
 
-                displayVideos(videos);
+                currentPage = data.page;
+                displayVideos(data.videos);
+                updatePaginationButtons();
             } catch (error) {
                 console.error('Ошибка загрузки видео:', error);
                 document.getElementById('videos-container').innerHTML =
@@ -603,7 +917,6 @@
             }
         }
 
-        // Отображение видео на странице
         function displayVideos(videos) {
             const container = document.getElementById('videos-container');
             container.innerHTML = '';
@@ -615,9 +928,10 @@
 
                 card.innerHTML = `
                     <div class="video-thumbnail">
-                        <img src="${video.thumbnail}"
+                        <img class="skeleton"
+                             data-src="${video.thumbnail}"
                              alt="${escapeHtml(video.title)}"
-                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22640%22 height=%22360%22%3E%3Cdefs%3E%3ClinearGradient id=%22bg%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22%3E%3Cstop offset=%220%25%22 style=%22stop-color:%2314141f%22/%3E%3Cstop offset=%22100%25%22 style=%22stop-color:%230a0a0f%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill=%22url(%23bg)%22 width=%22640%22 height=%22360%22/%3E%3Ctext fill=%22%23d4af37%22 font-family=%22Arial%22 font-size=%2224%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🎬 Видео%3C/text%3E%3C/svg%3E'">
+                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22640%22 height=%22360%22%3E%3Cdefs%3E%3ClinearGradient id=%22bg%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22%3E%3Cstop offset=%220%25%22 style=%22stop-color:%2314141f%22/%3E%3Cstop offset=%22100%25%22 style=%22stop-color:%230a0a0f%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill=%22url(%23bg)%22 width=%22640%22 height=%22360%22/%3E%3Ctext fill=%22%23d4af37%22 font-family=%22Arial%22 font-size=%2228%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🎬%3C/text%3E%3C/svg%3E'">
                         <div class="play-icon"></div>
                         <span class="duration">${video.duration}</span>
                     </div>
@@ -627,15 +941,42 @@
                 `;
 
                 container.appendChild(card);
+
+                // Добавляем lazy loading
+                const img = card.querySelector('img');
+                imageObserver.observe(img);
             });
+
+            // Плавная прокрутка вверх
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Открытие видео в модальном окне
+        function updatePaginationButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const pageInfo = document.getElementById('currentPage');
+
+            pageInfo.textContent = currentPage + 1;
+            prevBtn.disabled = currentPage === 0;
+        }
+
+        function nextPage() {
+            loadVideos(currentPage + 1);
+        }
+
+        function previousPage() {
+            if (currentPage > 0) {
+                loadVideos(currentPage - 1);
+            }
+        }
+
         async function openVideo(videoId) {
             const modal = document.getElementById('video-modal');
             const playerContainer = document.getElementById('video-player-container');
 
             modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
             playerContainer.innerHTML = `
                 <div class="loading">
                     <div class="loading-spinner"></div>
@@ -697,28 +1038,25 @@
             }
         }
 
-        // Закрытие модального окна
         function closeModal() {
             const modal = document.getElementById('video-modal');
             modal.classList.remove('active');
+            document.body.style.overflow = '';
             document.getElementById('video-player-container').innerHTML = '';
         }
 
-        // Закрытие по клику вне видео
         document.getElementById('video-modal').onclick = function(e) {
             if (e.target === this) {
                 closeModal();
             }
         };
 
-        // Закрытие по ESC
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeModal();
             }
         });
 
-        // Экранирование HTML
         function escapeHtml(text) {
             const map = {
                 '&': '&amp;',
@@ -730,22 +1068,17 @@
             return text.replace(/[&<>"']/g, m => map[m]);
         }
 
-        // Загрузка видео при загрузке страницы
-        window.onload = loadVideos;
+        window.onload = () => loadVideos(0);
 
-        // Плавная прокрутка
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
+        // Предотвращение двойного тапа для зума на iOS
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
     </script>
 </body>
 </html>

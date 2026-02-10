@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 from bs4 import BeautifulSoup
 from flask_cors import CORS
 import re
@@ -7,19 +7,26 @@ import cloudscraper
 app = Flask(__name__)
 CORS(app)
 
-video_cache = {'data': [], 'timestamp': 0}
+video_cache = {}
 CACHE_DURATION = 300
 
-TARGET_SITE = "https://www.xv-ru.com/?k=sissy"
+TARGET_SITE = "https://www.xv-ru.com/?k=sissy&typef=gay"
 
-def parse_main_page():
-    """Парсинг главной страницы"""
+def parse_main_page(page=0):
+    """Парсинг главной страницы с поддержкой пагинации"""
     try:
         print("="*60)
-        print(f"Запрос к {TARGET_SITE}")
+
+        # Формируем URL с параметром страницы
+        if page > 0:
+            url = f"{TARGET_SITE}&p={page}"
+        else:
+            url = TARGET_SITE
+
+        print(f"Запрос к {url}")
 
         scraper = cloudscraper.create_scraper()
-        response = scraper.get(TARGET_SITE, timeout=15)
+        response = scraper.get(url, timeout=15)
 
         print(f"Статус: {response.status_code}")
 
@@ -48,6 +55,7 @@ def parse_main_page():
 
                 # НАЗВАНИЕ из title атрибута ссылки в thumb-under
                 title_link = block.find('p', class_='title')
+                title = ""
                 if title_link:
                     title_a = title_link.find('a')
                     if title_a:
@@ -58,16 +66,18 @@ def parse_main_page():
 
                 # Если title не найден, пробуем текст
                 if not title:
-                    if title_a:
-                        title_text = title_a.get_text(strip=True)
-                        # Убираем длительность из конца
-                        title = re.sub(r'\s+\d+\s+(мин\.|сек\.|ч\.).*$', '', title_text)
+                    if title_link:
+                        title_a = title_link.find('a')
+                        if title_a:
+                            title_text = title_a.get_text(strip=True)
+                            # Убираем длительность из конца
+                            title = re.sub(r'\s+\d+\s+(мин\.|сек\.|ч\.).*$', '', title_text)
 
                 if not title:
                     title = f"Video {video_id}"
 
                 # Полный URL
-                video_url = TARGET_SITE.rstrip('/') + href if href.startswith('/') else href
+                video_url = TARGET_SITE.split('?')[0].rstrip('/') + href if href.startswith('/') else href
 
                 # Thumbnail
                 thumbnail = ""
@@ -100,7 +110,7 @@ def parse_main_page():
                 print(f"⚠ Ошибка парсинга блока: {e}")
                 continue
 
-        print(f"ИТОГО: {len(videos)} видео")
+        print(f"ИТОГО: {len(videos)} видео на странице {page}")
         return videos
 
     except Exception as e:
@@ -126,21 +136,45 @@ def index():
 @app.route('/api/videos')
 def get_videos():
     import time
-    current_time = time.time()
-    if current_time - video_cache['timestamp'] > CACHE_DURATION or not video_cache['data']:
-        print("\n🔄 Обновление кеша...")
-        video_cache['data'] = parse_main_page()
-        video_cache['timestamp'] = current_time
-    else:
-        remaining = int(CACHE_DURATION - (current_time - video_cache['timestamp']))
-        print(f"✓ Кеш ({remaining} сек, видео: {len(video_cache['data'])})")
 
-    return jsonify(video_cache['data'])
+    # Получаем номер страницы из параметров запроса
+    page = request.args.get('page', 0, type=int)
+
+    cache_key = f'page_{page}'
+    current_time = time.time()
+
+    # Проверяем кеш для конкретной страницы
+    if cache_key not in video_cache:
+        video_cache[cache_key] = {'data': [], 'timestamp': 0}
+
+    if current_time - video_cache[cache_key]['timestamp'] > CACHE_DURATION or not video_cache[cache_key]['data']:
+        print(f"\n🔄 Обновление кеша для страницы {page}...")
+        video_cache[cache_key]['data'] = parse_main_page(page)
+        video_cache[cache_key]['timestamp'] = current_time
+    else:
+        remaining = int(CACHE_DURATION - (current_time - video_cache[cache_key]['timestamp']))
+        print(f"✓ Кеш страницы {page} ({remaining} сек, видео: {len(video_cache[cache_key]['data'])})")
+
+    return jsonify({
+        'videos': video_cache[cache_key]['data'],
+        'page': page,
+        'total': len(video_cache[cache_key]['data'])
+    })
 
 @app.route('/api/video/<video_id>')
 def get_video_details(video_id):
-    videos = video_cache['data'] if video_cache['data'] else parse_main_page()
-    video = next((v for v in videos if v['id'] == video_id), None)
+    # Ищем видео в кеше всех страниц
+    video = None
+    for cache_key in video_cache:
+        if video_cache[cache_key]['data']:
+            video = next((v for v in video_cache[cache_key]['data'] if v['id'] == video_id), None)
+            if video:
+                break
+
+    # Если не найдено в кеше, парсим первую страницу
+    if not video:
+        videos = parse_main_page(0)
+        video = next((v for v in videos if v['id'] == video_id), None)
 
     if video:
         embed_data = get_video_embed_url(video_id)
@@ -151,8 +185,9 @@ def get_video_details(video_id):
 
 @app.route('/api/refresh')
 def refresh():
-    video_cache['timestamp'] = 0
-    videos = parse_main_page()
+    # Очищаем весь кеш
+    video_cache.clear()
+    videos = parse_main_page(0)
 
     # Добавляем embed для первых 3 видео
     for video in videos[:3]:
